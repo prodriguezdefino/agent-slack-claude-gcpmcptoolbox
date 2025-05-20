@@ -17,7 +17,7 @@ public class GenAiToolboxConfig {
     @Value("${genai.toolbox.service.url}")
     private String toolboxServiceUrl;
 
-    @Bean
+   /* @Bean
     public WebClient toolboxWebClient() {
         if (toolboxServiceUrl == null || toolboxServiceUrl.isBlank()) {
             logger.warn("genai.toolbox.service.url is not configured. ToolboxWebClient will not be functional.");
@@ -60,5 +60,5 @@ public class GenAiToolboxConfig {
                 .baseUrl(toolboxServiceUrl)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
-    }
+    } */
 }
