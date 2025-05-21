@@ -1,0 +1,50 @@
+slack:
+    botToken: ${SLACK_BOT_TOKEN:}
+    signingSecret: ${SLACK_SIGNING_SECRET:}
+# Spring Boot Actuator - GCP uses /health
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health,info
+    endpoint:
+        health:
+            show-details: always
+# Server port (useful for local testing, GCP Cloud Functions can use this as well)
+server:
+    port: 8080
+spring:
+    # web clients that interact will LLM needs more patience
+    webflux:
+        client:
+            connect-timeout: 5s 
+            response-timeout: 60s 
+    # Claude API Configuration
+    ai:
+        retry:
+            max-attempts: 5
+        anthropic:
+            api-key: ${CLAUDE_API_KEY:}
+            chat:
+                options:
+                    model: claude-3-7-sonnet-latest
+                    temperature: 0.7
+                    max-tokens: 450
+    # for async configurations
+    task:
+        execution:
+            pool:
+                core-size: 4 
+                max-size: 8 
+                queue-capacity: 100 
+                keep-alive: 100s 
+            thread-name-prefix: "claude-requests-" 
+            shutdown:
+                await-termination: true 
+                await-termination-period: 100s    
+# GenAI Toolbox Service Configuration
+genai:
+    toolbox:
+        service:
+            url: ${GENAI_TOOLBOX_SERVICE_URL:}
+
