@@ -23,3 +23,10 @@
 hs_err_pid*
 replay_pid*
 /target/
+
+# Terraform specific files
+infra/terraform.tfvars
+infra/.terraform/
+infra/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
