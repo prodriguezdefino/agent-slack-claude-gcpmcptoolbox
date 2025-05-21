@@ -21,15 +21,25 @@ import com.slack.api.bolt.response.Response;
 import com.slack.api.methods.SlackApiException;
 import com.slack.api.model.event.AppMentionEvent;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 /** */
+@Component
 public class Mention {
   private static final Logger LOG = LoggerFactory.getLogger(Mention.class);
 
-  public static Response handleMentionEvent(
-      EventsApiPayload<AppMentionEvent> payload, EventContext ctx) {
+  private final Claude claude;
+  private final ExecutorService executor;
+
+  public Mention(Claude claude, ExecutorService executor) {
+    this.claude = claude;
+    this.executor = executor;
+  }
+
+  public Response handleMentionEvent(EventsApiPayload<AppMentionEvent> payload, EventContext ctx) {
     AppMentionEvent event = payload.getEvent();
     String userMessageText = event.getText().replaceFirst("<@.*?>", "").trim(); // Remove mention
     String channelId = event.getChannel();
@@ -45,18 +55,23 @@ public class Mention {
         channelId,
         userMessageText);
 
-    try {
-      ctx.client()
-          .chatPostMessage(
-              r ->
-                  r.channel(event.getChannel())
-                      .threadTs(event.getThreadTs() != null ? event.getThreadTs() : event.getTs())
-                      // Reply in thread or to originalmessage
-                      .text("some dummy message for now."));
-      LOG.info("Successfully sent reply to Slack. HistoryKey: {}", historyKey);
-    } catch (IOException | SlackApiException e) {
-      LOG.error("Error sending Slack reply for HistoryKey {}: {}", historyKey, e.getMessage(), e);
-    }
+    executor.submit(
+        () -> {
+          try {
+            ctx.client()
+                .chatPostMessage(
+                    r ->
+                        r.channel(event.getChannel())
+                            .threadTs(
+                                event.getThreadTs() != null ? event.getThreadTs() : event.getTs())
+                            // Reply in thread or to originalmessage
+                            .text(claude.generate(userMessageText).toString()));
+            LOG.info("Successfully sent reply to Slack. HistoryKey: {}", historyKey);
+          } catch (IOException | SlackApiException e) {
+            LOG.error(
+                "Error sending Slack reply for HistoryKey {}: {}", historyKey, e.getMessage(), e);
+          }
+        });
 
     return ctx.ack(); // Acknowledge Slack event immediately
   }
