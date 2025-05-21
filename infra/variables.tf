@@ -3,6 +3,21 @@ variable "project_id" {
   type        = string
 }
 
+variable "claude_apikey" {
+  description = "The API KEY used for Claude interactions."
+  type        = string
+}
+
+variable "slackbot_workspace_token" {
+  description = "The workspace token created when adding the slackbot."
+  type        = string
+}
+
+variable "slackapp_signing_secret" {
+  description = "The signing secret for the slack app."
+  type        = string
+}
+
 variable "region" {
   description = "The Google Cloud region."
   type        = string
@@ -12,17 +27,11 @@ variable "region" {
 variable "service_name" {
   description = "The name of the Cloud Run service."
   type        = string
-  default     = "spring-boot-app"
-}
-
-variable "repository_name" {
-  description = "The name of the Cloud Source Repository."
-  type        = string
-  default     = "spring-boot-app-repo"
+  default     = "slack-claude-mcptoolbox-integration"
 }
 
 variable "artifact_registry_repository_name" {
   description = "The name of the Artifact Registry repository."
   type        = string
-  default     = "spring-boot-app-images"
+  default     = "slack-claude-mcptoolbox-integration-images"
 }

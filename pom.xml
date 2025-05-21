@@ -25,11 +25,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
-        
         <!-- Spring Boot Starter Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- indexer to speed up bootstrap -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-indexer</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.ai</groupId>
@@ -41,14 +46,12 @@
             <artifactId>bolt</artifactId>
             <version>1.45.3</version>
         </dependency>
-        
         <!-- Spring Boot Starter Test (for testing) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
         <!-- For JSON logging with Logback -->
         <dependency>
             <groupId>net.logstash.logback</groupId>

@@ -15,10 +15,5 @@
  */
 package org.example.gcp.slack.claude.config;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableAsync;
-
 /** */
-@Configuration
-@EnableAsync
-public class Common {}
+public class Claude {}

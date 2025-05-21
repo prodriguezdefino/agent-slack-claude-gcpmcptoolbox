@@ -15,9 +15,11 @@
  */
 package org.example.gcp.slack.claude.handlers;
 
+import java.util.concurrent.CompletableFuture;
 import org.springframework.ai.anthropic.AnthropicChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /** */
@@ -30,7 +32,8 @@ public class Claude {
     this.model = model;
   }
 
-  public ChatResponse generate(String message) {
-    return model.call(new Prompt(message));
+  @Async
+  public CompletableFuture<ChatResponse> generate(String message) {
+    return CompletableFuture.completedFuture(model.call(new Prompt(message)));
   }
 }

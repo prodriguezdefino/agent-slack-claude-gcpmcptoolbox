@@ -18,11 +18,7 @@ package org.example.gcp.slack.claude.handlers;
 import com.slack.api.app_backend.events.payload.EventsApiPayload;
 import com.slack.api.bolt.context.builtin.EventContext;
 import com.slack.api.bolt.response.Response;
-import com.slack.api.methods.SlackApiException;
 import com.slack.api.model.event.AppMentionEvent;
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -33,11 +29,11 @@ public class Mention {
   private static final Logger LOG = LoggerFactory.getLogger(Mention.class);
 
   private final Claude claude;
-  private final ExecutorService executor;
+  private final SlackSend slack;
 
-  public Mention(Claude claude, ExecutorService executor) {
+  public Mention(Claude claude, SlackSend send) {
     this.claude = claude;
-    this.executor = executor;
+    this.slack = send;
   }
 
   public Response handleMentionEvent(EventsApiPayload<AppMentionEvent> payload, EventContext ctx) {
@@ -49,37 +45,19 @@ public class Mention {
             ? event.getThreadTs()
             : event.getTs(); // Use thread_ts or message_ts
     String historyKey = channelId + "-" + threadTs;
-
-    sendResponse(ctx, event, historyKey, () -> "Coming up with a response...");
-    sendResponse(ctx, event, historyKey, () -> claude.generate(userMessageText).toString());
-
     LOG.info(
         "Received app_mention event from user {} in channel {}: {}",
         event.getUser(),
         channelId,
         userMessageText);
 
-    return ctx.ack(); // Acknowledge Slack event immediately
-  }
+    slack
+        .sendResponse(ctx, event, historyKey, "Coming up with a response...")
+        .thenCompose(__ -> claude.generate(userMessageText))
+        .thenCompose(
+            chatResponse -> slack.sendResponse(ctx, event, historyKey, chatResponse.toString()))
+        .thenAccept(__ -> LOG.info("Sent both responses to Slack."));
 
-  void sendResponse(
-      EventContext ctx, AppMentionEvent event, String historyKey, Supplier<String> textToSend) {
-    executor.submit(
-        () -> {
-          try {
-            ctx.client()
-                .chatPostMessage(
-                    r ->
-                        r.channel(event.getChannel())
-                            .threadTs(
-                                event.getThreadTs() != null ? event.getThreadTs() : event.getTs())
-                            // Reply in thread or to originalmessage
-                            .text(textToSend.get()));
-            LOG.info("Successfully sent reply to Slack. HistoryKey: {}", historyKey);
-          } catch (IOException | SlackApiException e) {
-            LOG.error(
-                "Error sending Slack reply for HistoryKey {}: {}", historyKey, e.getMessage(), e);
-          }
-        });
+    return ctx.ack(); // Acknowledge Slack event immediately
   }
 }
