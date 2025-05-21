@@ -17,21 +17,13 @@
 
     <properties>
         <java.version>21</java.version>
-        <spring-cloud-function.version>4.2.2</spring-cloud-function.version>
     </properties>
 
     <dependencies>
-        <!-- Spring Cloud Function Adapter for GCP -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-function-adapter-gcp</artifactId>
-            <version>${spring-cloud-function.version}</version>
-        </dependency>
-
-        <!-- Spring Boot Starter Web (for local testing and RestTemplate/WebClient) -->
+        <!-- Spring Boot Starter WebFlux (for WebClient) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
         
         <!-- Spring Boot Starter Actuator -->
@@ -46,12 +38,6 @@
             <version>1.45.3</version>
         </dependency>
         
-        <!-- Spring Boot Starter WebFlux (for WebClient) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-
         <!-- Spring Boot Starter Test (for testing) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -63,7 +49,7 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>8.1</version> <!-- Use a recent stable version -->
+            <version>7.4</version> <!-- Use a recent stable version -->
         </dependency>
     </dependencies>
 
@@ -72,25 +58,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <outputDirectory>target/deploy</outputDirectory>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.springframework.cloud</groupId>
-                        <artifactId>spring-cloud-function-adapter-gcp</artifactId>
-                        <version>${spring-cloud-function.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>com.google.cloud.functions</groupId>
-                <artifactId>function-maven-plugin</artifactId>
-                <version>0.11.1</version>
-                <configuration>
-                    <functionTarget>org.springframework.cloud.function.adapter.gcp.GcfJarLauncher</functionTarget>
-                    <port>8080</port>
-                </configuration>
             </plugin>
         </plugins>
     </build>

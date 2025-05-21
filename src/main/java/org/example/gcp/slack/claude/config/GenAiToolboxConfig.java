@@ -1,4 +1,4 @@
-package com.example.gcpcloudfunction.toolbox;
+package org.example.gcp.slack.claude.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
