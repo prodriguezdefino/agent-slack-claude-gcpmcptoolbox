@@ -15,28 +15,11 @@ steps:
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REGISTRY_REPO_NAME}/${_SERVICE_NAME}:latest'
     id: 'Push to Artifact Registry'
 
-  # Deploy to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'run'
-      - 'deploy'
-      - '${_SERVICE_NAME}'
-      - '--image'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REGISTRY_REPO_NAME}/${_SERVICE_NAME}:latest'
-      - '--region'
-      - '${_REGION}'
-      - '--platform'
-      - 'managed'
-      - '--quiet' # Add quiet to suppress interactive prompts
-      - '--allow-unauthenticated' # If you want the service to be publicly accessible
-    id: 'Deploy to Cloud Run'
-
 images:
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REGISTRY_REPO_NAME}/${_SERVICE_NAME}:latest'
 
 # Substitutions - these can be set in the Cloud Build trigger
-# or passed during a manual build
+# or passed during a manual build (which is what the terraform local-exec does)
 substitutions:
   _SERVICE_NAME: 'spring-boot-app' # Default value
   _REGION: 'us-central1' # Default value
