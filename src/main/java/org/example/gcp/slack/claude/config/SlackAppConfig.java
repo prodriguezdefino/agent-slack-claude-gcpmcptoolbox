@@ -39,8 +39,8 @@ public class SlackAppConfig {
   }
 
   @Bean
-  public App initSlackApp(AppConfig appConfig) {
-    return new App(appConfig).event(AppMentionEvent.class, Mention::handleMentionEvent);
+  public App initSlackApp(AppConfig appConfig, Mention mention) {
+    return new App(appConfig).event(AppMentionEvent.class, mention::handleMentionEvent);
   }
 
   @Bean
