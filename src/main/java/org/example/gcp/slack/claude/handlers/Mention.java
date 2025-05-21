@@ -22,6 +22,7 @@ import com.slack.api.methods.SlackApiException;
 import com.slack.api.model.event.AppMentionEvent;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -49,12 +50,20 @@ public class Mention {
             : event.getTs(); // Use thread_ts or message_ts
     String historyKey = channelId + "-" + threadTs;
 
+    sendResponse(ctx, event, historyKey, () -> "Coming up with a response...");
+    sendResponse(ctx, event, historyKey, () -> claude.generate(userMessageText).toString());
+
     LOG.info(
         "Received app_mention event from user {} in channel {}: {}",
         event.getUser(),
         channelId,
         userMessageText);
 
+    return ctx.ack(); // Acknowledge Slack event immediately
+  }
+
+  void sendResponse(
+      EventContext ctx, AppMentionEvent event, String historyKey, Supplier<String> textToSend) {
     executor.submit(
         () -> {
           try {
@@ -65,14 +74,12 @@ public class Mention {
                             .threadTs(
                                 event.getThreadTs() != null ? event.getThreadTs() : event.getTs())
                             // Reply in thread or to originalmessage
-                            .text(claude.generate(userMessageText).toString()));
+                            .text(textToSend.get()));
             LOG.info("Successfully sent reply to Slack. HistoryKey: {}", historyKey);
           } catch (IOException | SlackApiException e) {
             LOG.error(
                 "Error sending Slack reply for HistoryKey {}: {}", historyKey, e.getMessage(), e);
           }
         });
-
-    return ctx.ack(); // Acknowledge Slack event immediately
   }
 }
