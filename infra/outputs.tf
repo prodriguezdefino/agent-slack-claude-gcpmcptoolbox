@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-terraform {
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 4.0"
-    }
-  }
+output "slack_app_service_url" {
+  description = "The URL of the deployed Cloud Run service."
+  value       = google_cloud_run_v2_service.slack_app_service.uri
+}
+output "mcptoolbox_service_url" {
+  description = "The URL of the deployed Cloud Run service."
+  value       = google_cloud_run_v2_service.mcptoolbox.uri
 }
 
-provider "google" {
-  project = var.project_id
-  region  = var.region
+output "artifact_registry_repository_url" {
+  description = "The URL of the Artifact Registry repository."
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.default.repository_id}"
 }

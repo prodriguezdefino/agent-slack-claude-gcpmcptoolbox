@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "toolbox": {
+      "type": "sse",
+      "url": "@mcptoolbox_url@/mcp/sse"
+    }
+  }
+}

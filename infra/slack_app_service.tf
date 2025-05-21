@@ -1,0 +1,80 @@
+/**
+ * Copyright 2025 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+resource "google_cloud_run_v2_service" "slack_app_service" {
+  name     = var.service_name
+  location = var.region
+
+  template {
+    # Add annotations to force a new revision when code changes
+    annotations = {
+      "app-code-version-src" = null_resource.cloud_build_on_change.triggers.app_src_hash
+      "app-code-version-pom" = null_resource.cloud_build_on_change.triggers.pom_xml_hash
+    }
+
+    containers {
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.default.repository_id}/${var.service_name}:latest" # Placeholder, will be updated by Cloud Build
+      resources {
+        limits = {
+          memory = "1024Mi"
+          cpu    = "2"
+        }
+      }
+      ports {
+        container_port = 8080
+      }
+      env {
+        name  = "CLAUDE_API_KEY"
+        value = var.claude_apikey
+      }
+      env {
+        name  = "SLACK_BOT_TOKEN"
+        value = var.slackbot_workspace_token
+      }
+      env {
+        name  = "SLACK_SIGNING_SECRET"
+        value = var.slackapp_signing_secret
+      }
+    }
+  }
+
+  traffic {
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
+  }
+
+  depends_on = [google_artifact_registry_repository.default]
+}
+
+# Allow unauthenticated invocations for the Cloud Run service
+resource "google_cloud_run_service_iam_member" "slack_allow_unauthenticated" {
+  location = google_cloud_run_v2_service.slack_app_service.location
+  project  = google_cloud_run_v2_service.slack_app_service.project
+  service  = google_cloud_run_v2_service.slack_app_service.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
+data "archive_file" "app_src_archive" {
+  type        = "zip"
+  source_dir  = "../src"
+  output_path = ".terraform/temp/app_src.zip"
+}
+
+data "local_file" "pom_xml" {
+  filename = "../pom.xml"
+}
+
