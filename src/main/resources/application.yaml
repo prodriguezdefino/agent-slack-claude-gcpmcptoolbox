@@ -52,9 +52,4 @@ spring:
             shutdown:
                 await-termination: true 
                 await-termination-period: 100s    
-# GenAI Toolbox Service Configuration
-genai:
-    toolbox:
-        service:
-            url: ${GENAI_TOOLBOX_SERVICE_URL:}
 
