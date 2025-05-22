@@ -18,7 +18,7 @@ spring:
     webflux:
         client:
             connect-timeout: 5s 
-            response-timeout: 60s 
+            response-timeout: 400s 
     # Claude API Configuration
     ai:
         retry:
@@ -30,6 +30,16 @@ spring:
                     model: claude-3-7-sonnet-latest
                     temperature: 0.7
                     max-tokens: 450
+        mcp:
+            client:
+                request-timeout: 200s
+                toolcallback:
+                    enabled: true
+                sse:
+                    connections:
+                        gcptoolbox:
+                            url: ${MCPTOOLBOX_URL:}
+                            sse-endpoint: /mcp/sse
     # for async configurations
     task:
         execution:

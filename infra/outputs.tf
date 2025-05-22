@@ -16,7 +16,7 @@
 
 output "slack_app_service_url" {
   description = "The URL of the deployed Cloud Run service."
-  value       = google_cloud_run_v2_service.slack_app_service.uri
+  value       = google_cloud_run_v2_service.slackapp_service.uri
 }
 output "mcptoolbox_service_url" {
   description = "The URL of the deployed Cloud Run service."

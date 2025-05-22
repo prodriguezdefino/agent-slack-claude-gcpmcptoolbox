@@ -28,12 +28,12 @@ resource "null_resource" "cloud_build_on_change" {
   }
 
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       echo "Code changes detected, triggering Cloud Build..."
       gcloud builds submit . \
         --project ${var.project_id} \
         --config cloudbuild.yaml \
-        --substitutions=_SERVICE_NAME=${var.service_name},_REGION=${var.region},_ARTIFACT_REGISTRY_REPO_NAME=${google_artifact_registry_repository.default.repository_id},_MCPTOOLBOX_URL=${google_cloud_run_v2_service.mcptoolbox.uri} \
+        --substitutions _SERVICE_NAME=${var.service_name},_REGION=${var.region},_ARTIFACT_REGISTRY_REPO_NAME=${google_artifact_registry_repository.default.repository_id},_MCPTOOLBOX_URL=${google_cloud_run_v2_service.mcptoolbox.uri} \
         --quiet
     EOT
     working_dir = "../"

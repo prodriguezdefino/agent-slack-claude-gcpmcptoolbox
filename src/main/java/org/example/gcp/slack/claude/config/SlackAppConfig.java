@@ -19,7 +19,7 @@ import com.slack.api.bolt.App;
 import com.slack.api.bolt.AppConfig;
 import com.slack.api.bolt.util.SlackRequestParser;
 import com.slack.api.model.event.AppMentionEvent;
-import org.example.gcp.slack.claude.handlers.Mention;
+import org.example.gcp.slack.claude.handlers.SlackMention;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,7 +39,7 @@ public class SlackAppConfig {
   }
 
   @Bean
-  public App initSlackApp(AppConfig appConfig, Mention mention) {
+  public App initSlackApp(AppConfig appConfig, SlackMention mention) {
     return new App(appConfig).event(AppMentionEvent.class, mention::handleMentionEvent);
   }
 

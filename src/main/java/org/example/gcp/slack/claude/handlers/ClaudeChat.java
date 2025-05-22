@@ -15,25 +15,34 @@
  */
 package org.example.gcp.slack.claude.handlers;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import org.springframework.ai.anthropic.AnthropicChatModel;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /** */
 @Component
-public class Claude {
+public class ClaudeChat {
 
-  private final AnthropicChatModel model;
+  private final ChatClient chatClient;
+  private final SystemPromptTemplate systemPrompt;
 
-  public Claude(AnthropicChatModel model) {
-    this.model = model;
+  public ClaudeChat(ChatClient chatClient, SystemPromptTemplate systemPrompt) {
+    this.chatClient = chatClient;
+    this.systemPrompt = systemPrompt;
   }
 
   @Async
   public CompletableFuture<ChatResponse> generate(String message) {
-    return CompletableFuture.completedFuture(model.call(new Prompt(message)));
+    return CompletableFuture.completedFuture(
+        chatClient
+            .prompt(new Prompt(List.of(new UserMessage(message), systemPrompt.createMessage())))
+            .call()
+            .chatResponse());
   }
 }

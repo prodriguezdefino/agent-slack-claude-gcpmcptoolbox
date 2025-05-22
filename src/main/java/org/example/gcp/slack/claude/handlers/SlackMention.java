@@ -15,6 +15,8 @@
  */
 package org.example.gcp.slack.claude.handlers;
 
+import static org.example.gcp.slack.claude.common.Utils.extractResponse;
+
 import com.slack.api.app_backend.events.payload.EventsApiPayload;
 import com.slack.api.bolt.context.builtin.EventContext;
 import com.slack.api.bolt.response.Response;
@@ -25,13 +27,13 @@ import org.springframework.stereotype.Component;
 
 /** */
 @Component
-public class Mention {
-  private static final Logger LOG = LoggerFactory.getLogger(Mention.class);
+public class SlackMention {
+  private static final Logger LOG = LoggerFactory.getLogger(SlackMention.class);
 
-  private final Claude claude;
+  private final ClaudeChat claude;
   private final SlackSend slack;
 
-  public Mention(Claude claude, SlackSend send) {
+  public SlackMention(ClaudeChat claude, SlackSend send) {
     this.claude = claude;
     this.slack = send;
   }
@@ -55,7 +57,8 @@ public class Mention {
         .sendResponse(ctx, event, historyKey, "Coming up with a response...")
         .thenCompose(__ -> claude.generate(userMessageText))
         .thenCompose(
-            chatResponse -> slack.sendResponse(ctx, event, historyKey, chatResponse.toString()))
+            chatResponse ->
+                slack.sendResponse(ctx, event, historyKey, extractResponse(chatResponse)))
         .thenAccept(__ -> LOG.info("Sent both responses to Slack."));
 
     return ctx.ack(); // Acknowledge Slack event immediately

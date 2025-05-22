@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.server.ServerRequest;
 
@@ -79,5 +80,11 @@ public class Utils {
       LOG.error(
           "Failed to send error message to Slack user {}: {}", event.getUser(), e.getMessage(), e);
     }
+  }
+
+  public static String extractResponse(ChatResponse chatResponse) {
+    return chatResponse.getResults().stream()
+        .map(gen -> gen.getOutput().getText())
+        .collect(Collectors.joining("\n"));
   }
 }

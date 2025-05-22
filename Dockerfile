@@ -1,15 +1,15 @@
 # Build stage
 FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
-ARG MCPTOOLBOX_URL
 WORKDIR /app
 COPY license-header .
 COPY pom.xml .
 COPY src ./src
-RUN mvn clean install -DskipTests -Dmcptoolbox_url=${MCPTOOLBOX_URL}
-RUN cat target/classes/mcptools.json
+RUN mvn clean install -DskipTests
 
 # Package and metadata stage
 FROM eclipse-temurin:21-jre-alpine AS metadata-gen
+ARG MCPTOOLBOX_URL_ARG
+ENV MCPTOOLBOX_URL=${MCPTOOLBOX_URL_ARG}
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 RUN java -XX:ArchiveClassesAtExit=application.jsa -Dspring.context.exit=onRefresh -jar app.jar

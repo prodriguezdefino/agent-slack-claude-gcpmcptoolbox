@@ -26,18 +26,18 @@ resource "google_secret_manager_secret" "tools_yaml" {
   secret_id = "mcptoolbox-tools-yaml"
 
   replication {
-        user_managed {
-            replicas {
-                location = var.region
-            }
-        }
+    user_managed {
+      replicas {
+        location = var.region
+      }
     }
+  }
 }
 
 resource "google_secret_manager_secret_version" "tools_yaml_version" {
   secret                = google_secret_manager_secret.tools_yaml.id
   is_secret_data_base64 = false
-  secret_data = local.mcptoolbox_config_redered
+  secret_data           = local.mcptoolbox_config_redered
 }
 
 resource "google_service_account" "toolbox" {
@@ -55,10 +55,15 @@ resource "google_secret_manager_secret_iam_member" "secret_accessor" {
 resource "google_bigquery_dataset_iam_member" "bq_dataset_querier" {
   project    = var.project_id
   dataset_id = google_bigquery_dataset.dataset.dataset_id
-  role       = "roles/bigquery.dataViewer"
+  role       = "roles/bigquery.dataEditor"
   member     = "serviceAccount:${google_service_account.toolbox.email}"
 }
 
+resource "google_project_iam_member" "bq_job_user" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.toolbox.email}"
+}
 
 resource "google_cloud_run_v2_service" "mcptoolbox" {
   name     = "mcptoolbox-server"
@@ -82,7 +87,7 @@ resource "google_cloud_run_v2_service" "mcptoolbox" {
         name       = "secrets-volume"
         mount_path = "/app/config"
       }
-      args = [ "--tools-file=/app/config/tools.yaml","--address=0.0.0.0","--port=8080" ]
+      args = ["--tools-file=/app/config/tools.yaml", "--address=0.0.0.0", "--port=8080"]
       ports {
         container_port = 8080
       }
@@ -97,7 +102,7 @@ resource "google_cloud_run_v2_service" "mcptoolbox" {
   depends_on = [google_artifact_registry_repository.default]
 }
 
-resource "google_cloud_run_service_iam_member" "mcp_allow_unauthenticated" {
+resource "google_cloud_run_service_iam_member" "mcp_allow_slackapp" {
   location = google_cloud_run_v2_service.mcptoolbox.location
   project  = google_cloud_run_v2_service.mcptoolbox.project
   service  = google_cloud_run_v2_service.mcptoolbox.name
