@@ -99,7 +99,10 @@ resource "google_cloud_run_v2_service" "mcptoolbox" {
     percent = 100
   }
 
-  depends_on = [google_artifact_registry_repository.default]
+  depends_on = [
+    google_artifact_registry_repository.default,
+    google_secret_manager_secret_iam_member.secret_accessor
+  ]
 }
 
 resource "google_cloud_run_service_iam_member" "mcp_allow_slackapp" {

@@ -20,9 +20,10 @@ resource "google_bigquery_dataset" "dataset" {
 }
 
 resource "google_bigquery_table" "hotels" {
-  dataset_id = google_bigquery_dataset.dataset.dataset_id
-  table_id   = local.bq_table
-  schema     = <<EOF
+  dataset_id          = google_bigquery_dataset.dataset.dataset_id
+  table_id            = local.bq_table
+  deletion_protection = false
+  schema              = <<EOF
     [
         {
           "name": "id",
