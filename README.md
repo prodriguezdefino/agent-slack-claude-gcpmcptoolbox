@@ -2,12 +2,25 @@
 
 This repository contains a integration example for a Slack application, implemented with Slackbot service, which integrates chat-like communication with Anthropic's Claude LLM and can discover Google Cloud Platform (GCP) datasources through an MCP based server. The core application is built using Java and Spring Boot.
 
+All the code included in this project is intended for demonstration purposes only. It is not intended for use in a production environment. Permissions granted to the underlying resources are too broad, so is important to deploy this demo with caution and not use production infrastructure, datasources, etc.
+
 ## Components
+
+This solution integrates the following components:
+
+* Slack, through the implementation of a Slackbot, using Bolt's SDK for Java.
+* GCP CloudRun as the runtime for our services.
+* BigQuery as the data repository we want to access.
+* Anthropic's Claude LLM, who is in charge of orchestrating which datasources use and trigger needed queries or updates.
+* [MCP Toolbox for Databases](https://googleapis.github.io/genai-toolbox/getting-started/introduction/), deployed as a CloudRun service and in charge of exposing the access to GCP databases to LLMs through MCP.
+* Spring Boot service exposing the Slackbot functionality.
+
+The code in the repository is arranged in 2 main folders.
 
 - **`src/`**: This directory houses the source code for the Java Spring Boot application. It includes all the modules and functionalities of the Slackbot service.
 - **`infra/`**: This directory contains Terraform scripts responsible for defining and deploying the necessary Google Cloud Platform (GCP) infrastructure for the service.
 
-### Key Files at Root Level
+Other key files in the repository.
 
 - **`Dockerfile`**: This file contains the instructions to build a Docker image for the application, enabling containerization and consistent deployment.
 - **`cloudbuild.yaml`**: This file defines the CI/CD pipeline configurations for Google Cloud Build, automating the build, test, and deployment processes.
