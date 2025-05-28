@@ -1,12 +1,12 @@
 sources:
-  my-bigquery-source:
+  bq-hotels:
     kind: bigquery
     project: ${project_id}
     location: us
 tools:
   search-hotels-by-name:
     kind: bigquery-sql
-    source: my-bigquery-source
+    source: bq-hotels
     description: Search for hotels based on name.
     parameters:
       - name: name
@@ -15,7 +15,7 @@ tools:
     statement: SELECT * FROM `${dataset_id}.hotels` WHERE LOWER(name) LIKE LOWER(CONCAT('%', @name, '%'));
   search-hotels-by-location:
     kind: bigquery-sql
-    source: my-bigquery-source
+    source: bq-hotels
     description: Search for hotels based on location.
     parameters:
       - name: location
@@ -24,7 +24,7 @@ tools:
     statement: SELECT * FROM `${dataset_id}.hotels` WHERE LOWER(location) LIKE LOWER(CONCAT('%', @location, '%'));
   book-hotel:
     kind: bigquery-sql
-    source: my-bigquery-source
+    source: bq-hotels
     description: >-
        Book a hotel by its ID. If the hotel is successfully booked, returns a NULL, raises an error if not.
     parameters:
@@ -34,7 +34,7 @@ tools:
     statement: UPDATE `${dataset_id}.hotels` SET booked = TRUE WHERE id = @hotel_id;
   update-hotel:
     kind: bigquery-sql
-    source: my-bigquery-source
+    source: bq-hotels
     description: >-
       Update a hotel's check-in and check-out dates by its ID. Returns a message indicating whether the hotel was successfully updated or not.
     parameters:
@@ -51,7 +51,7 @@ tools:
       UPDATE `${dataset_id}.hotels` SET checkin_date = PARSE_DATE('%Y-%m-%d', @checkin_date), checkout_date = PARSE_DATE('%Y-%m-%d', @checkout_date) WHERE id = @hotel_id;
   cancel-hotel:
     kind: bigquery-sql
-    source: my-bigquery-source
+    source: bq-hotels
     description: Cancel a hotel by its ID.
     parameters:
       - name: hotel_id

@@ -15,7 +15,10 @@
  */
 package org.example.gcp.slack.claude.handlers;
 
-import static org.example.gcp.slack.claude.common.Utils.extractResponse;
+import static org.example.gcp.slack.claude.common.Utils.removeMention;
+import static org.example.gcp.slack.claude.common.Utils.sendErrorToSlack;
+import static org.example.gcp.slack.claude.common.Utils.threadTs;
+import static org.example.gcp.slack.claude.common.Utils.toText;
 
 import com.slack.api.app_backend.events.payload.EventsApiPayload;
 import com.slack.api.bolt.context.builtin.EventContext;
@@ -31,22 +34,19 @@ public class SlackMention {
   private static final Logger LOG = LoggerFactory.getLogger(SlackMention.class);
 
   private final ClaudeChat claude;
-  private final SlackSend slack;
+  private final SlackOperations slack;
 
-  public SlackMention(ClaudeChat claude, SlackSend send) {
+  public SlackMention(ClaudeChat claude, SlackOperations send) {
     this.claude = claude;
     this.slack = send;
   }
 
   public Response handleMentionEvent(EventsApiPayload<AppMentionEvent> payload, EventContext ctx) {
-    AppMentionEvent event = payload.getEvent();
-    String userMessageText = event.getText().replaceFirst("<@.*?>", "").trim(); // Remove mention
-    String channelId = event.getChannel();
-    String threadTs =
-        event.getThreadTs() != null
-            ? event.getThreadTs()
-            : event.getTs(); // Use thread_ts or message_ts
-    String historyKey = channelId + "-" + threadTs;
+    var event = payload.getEvent();
+    var userMessageText = removeMention(event.getText());
+    var channelId = event.getChannel();
+    var threadTs = threadTs(event);
+
     LOG.info(
         "Received app_mention event from user {} in channel {}: {}",
         event.getUser(),
@@ -54,12 +54,20 @@ public class SlackMention {
         userMessageText);
 
     slack
-        .sendResponse(ctx, event, historyKey, "Coming up with a response...")
-        .thenCompose(__ -> claude.generate(userMessageText))
-        .thenCompose(
-            chatResponse ->
-                slack.sendResponse(ctx, event, historyKey, extractResponse(chatResponse)))
-        .thenAccept(__ -> LOG.info("Sent both responses to Slack."));
+        .reply(ctx, event, "Thinking...")
+        .flatMap(__ -> slack.history(ctx, channelId, threadTs))
+        .flatMap(previousMessages -> claude.generate(userMessageText, previousMessages))
+        .flatMap(llmResponse -> slack.reply(ctx, event, toText(llmResponse)))
+        .subscribe(
+            __ -> LOG.info("Sent responses to Slack."),
+            ex ->
+                sendErrorToSlack(
+                    ctx,
+                    event,
+                    """
+                    Problems executing the task, you can retry it.
+                    Detailed cause: """
+                        + ex.getMessage()));
 
     return ctx.ack(); // Acknowledge Slack event immediately
   }

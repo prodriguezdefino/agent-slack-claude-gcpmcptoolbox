@@ -70,6 +70,10 @@ resource "google_cloud_run_v2_service" "mcptoolbox" {
   location = var.region
 
   template {
+    scaling {
+      min_instance_count = 1
+      max_instance_count = 5
+    }
     service_account = google_service_account.toolbox.email
     volumes {
       name = "secrets-volume"
@@ -87,7 +91,7 @@ resource "google_cloud_run_v2_service" "mcptoolbox" {
         name       = "secrets-volume"
         mount_path = "/app/config"
       }
-      args = ["--tools-file=/app/config/tools.yaml", "--address=0.0.0.0", "--port=8080"]
+      args = ["--tools-file=/app/config/tools.yaml", "--log-level=debug", "--address=0.0.0.0", "--port=8080"]
       ports {
         container_port = 8080
       }

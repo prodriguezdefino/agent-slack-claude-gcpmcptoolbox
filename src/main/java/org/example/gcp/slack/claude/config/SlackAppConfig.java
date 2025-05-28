@@ -44,7 +44,7 @@ public class SlackAppConfig {
   }
 
   @Bean
-  public SlackRequestParser slackParse(AppConfig appConfig) {
+  public SlackRequestParser slackRequestParser(AppConfig appConfig) {
     return new SlackRequestParser(appConfig);
   }
 }

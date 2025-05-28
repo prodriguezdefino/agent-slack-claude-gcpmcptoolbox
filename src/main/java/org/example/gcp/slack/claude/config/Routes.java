@@ -15,7 +15,7 @@
  */
 package org.example.gcp.slack.claude.config;
 
-import org.example.gcp.slack.claude.handlers.Chat;
+import org.example.gcp.slack.claude.handlers.SlackHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RequestPredicates;
@@ -27,7 +27,7 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 public class Routes {
 
   @Bean
-  public RouterFunction<?> myRoutes(Chat handler) {
-    return RouterFunctions.route(RequestPredicates.POST("/chat"), handler::handleChat);
+  public RouterFunction<?> chatResource(SlackHandler handler) {
+    return RouterFunctions.route(RequestPredicates.POST("/chat"), handler::chatInteraction);
   }
 }

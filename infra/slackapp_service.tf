@@ -25,8 +25,12 @@ resource "google_cloud_run_v2_service" "slackapp_service" {
       "app-code-version-pom" = null_resource.cloud_build_on_change.triggers.pom_xml_hash
     }
     service_account = google_service_account.slackapp.email
+    scaling {
+      min_instance_count = 1
+      max_instance_count = 5
+    }
     containers {
-      image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.default.repository_id}/${var.service_name}:latest" # Placeholder, will be updated by Cloud Build
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.default.repository_id}/${var.service_name}:latest"
       resources {
         limits = {
           memory = "1024Mi"

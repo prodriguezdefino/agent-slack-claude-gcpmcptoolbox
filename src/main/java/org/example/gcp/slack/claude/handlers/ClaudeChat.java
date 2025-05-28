@@ -16,19 +16,20 @@
 package org.example.gcp.slack.claude.handlers;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /** */
 @Component
 public class ClaudeChat {
-
   private final ChatClient chatClient;
   private final SystemPromptTemplate systemPrompt;
 
@@ -37,12 +38,21 @@ public class ClaudeChat {
     this.systemPrompt = systemPrompt;
   }
 
-  @Async
-  public CompletableFuture<ChatResponse> generate(String message) {
-    return CompletableFuture.completedFuture(
-        chatClient
-            .prompt(new Prompt(List.of(new UserMessage(message), systemPrompt.createMessage())))
-            .call()
-            .chatResponse());
+  public Mono<ChatResponse> generate(String message, List<Message> messages) {
+    return Mono.fromCallable(
+            () ->
+                chatClient
+                    .prompt(
+                        new Prompt(
+                            Stream.of(
+                                    List.<Message>of(new UserMessage(message)),
+                                    messages,
+                                    List.of(systemPrompt.createMessage()))
+                                .flatMap(List::stream)
+                                .toList()))
+                    .call()
+                    .chatResponse())
+        .retry(5)
+        .subscribeOn(Schedulers.boundedElastic());
   }
 }

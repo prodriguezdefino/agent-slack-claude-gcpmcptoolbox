@@ -29,27 +29,27 @@ import reactor.core.publisher.Mono;
 
 /** */
 @Component
-public class Chat {
+public class SlackHandler {
   private final App slackApp;
   private final SlackRequestParser requestParser;
 
-  public Chat(App slackApp, SlackRequestParser requestParser) {
+  public SlackHandler(App slackApp, SlackRequestParser requestParser) {
     this.slackApp = slackApp;
     this.requestParser = requestParser;
   }
 
-  public Mono<ServerResponse> handleChat(ServerRequest request) {
+  public Mono<ServerResponse> chatInteraction(ServerRequest request) {
     return request
         .bodyToMono(String.class)
         .flatMap(
             body ->
                 processSlackRequest(slackApp, parseSlackRequest(requestParser, request, body))
-                    .map(
+                    .flatMap(
                         response ->
                             ServerResponse.ok()
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(new SlackResponse(response.getBody())))
-                    .orElse(
+                    .onErrorResume(
                         ex ->
                             ServerResponse.status(HttpStatusCode.valueOf(500))
                                 .bodyValue(new SlackResponse(ex.getMessage()))))

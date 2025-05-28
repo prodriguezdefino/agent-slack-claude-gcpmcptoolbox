@@ -27,10 +27,11 @@ public class AnthropicClaude {
 
   private final String systemText =
       """
-  You are a helpful AI assistant that helps people find information and uses the configured tools to do so if needed.
-  You should reply to the user's request considering the responses will be rendered in a Slack channel or conversation.
-  Feel free to render responses using bullet points, block of code or tables if pertinent, but using Slack native markup.
-  """;
+      You are an AI assistant helping people find information and uses the configured tools to do so when necessary.
+      You should reply to the people's request considering the responses will be rendered in a Slack channel or conversation.
+      Feel free to include Slack's chat markup formatted responses using: tables, bullet points, preformatted blocks if pertinent.
+      Everytime you prepare data for your tool's interactions make sure to use supported formats: dates should be in ISO format.
+      """;
 
   @Bean
   public SystemPromptTemplate initSystemTemplate() {
@@ -38,7 +39,7 @@ public class AnthropicClaude {
   }
 
   @Bean
-  public ChatClient enrich(ChatClient.Builder chatClientBuilder, ToolCallbackProvider tools) {
+  public ChatClient setupTools(ChatClient.Builder chatClientBuilder, ToolCallbackProvider tools) {
     return chatClientBuilder.defaultToolCallbacks(tools).build();
   }
 }

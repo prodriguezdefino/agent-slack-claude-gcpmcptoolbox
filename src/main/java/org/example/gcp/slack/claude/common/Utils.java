@@ -26,12 +26,17 @@ import com.slack.api.model.event.AppMentionEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.server.ServerRequest;
+import reactor.core.publisher.Mono;
 
 /** */
 public class Utils {
@@ -57,12 +62,11 @@ public class Utils {
             .build());
   }
 
-  public static Result<Response, Exception> processSlackRequest(
-      App slackApp, Request<?> slackRequest) {
+  public static Mono<Response> processSlackRequest(App slackApp, Request<?> slackRequest) {
     try {
-      return Result.success(slackApp.run(slackRequest));
+      return Mono.just(slackApp.run(slackRequest));
     } catch (Exception ex) {
-      return Result.failure(ex);
+      return Mono.error(ex);
     }
   }
 
@@ -82,9 +86,22 @@ public class Utils {
     }
   }
 
-  public static String extractResponse(ChatResponse chatResponse) {
+  public static String toText(ChatResponse chatResponse) {
     return chatResponse.getResults().stream()
         .map(gen -> gen.getOutput().getText())
         .collect(Collectors.joining("\n"));
+  }
+
+  public static String removeMention(String text) {
+    return text.replaceFirst("<@.*?>", "").trim();
+  }
+
+  public static String threadTs(AppMentionEvent event) {
+    return Optional.ofNullable(event.getThreadTs()).orElse(event.getTs());
+  }
+
+  public static Message toMessage(String userId, String botId, String text) {
+    if (userId.equals(botId)) return new AssistantMessage(text);
+    return new UserMessage(text);
   }
 }

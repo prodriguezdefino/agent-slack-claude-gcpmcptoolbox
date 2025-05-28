@@ -1,3 +1,8 @@
+logging:
+    level:
+        org.springframework.web: DEBUG
+        org.springframework.core.codec: DEBUG
+        org.springframework.ai: DEBUG
 slack:
     botToken: ${SLACK_BOT_TOKEN:}
     signingSecret: ${SLACK_SIGNING_SECRET:}
@@ -17,22 +22,20 @@ spring:
     # web clients that interact will LLM needs more patience
     webflux:
         client:
-            connect-timeout: 5s 
-            response-timeout: 400s 
+            connect-timeout: 5s
+            response-timeout: 200s
     # Claude API Configuration
     ai:
-        retry:
-            max-attempts: 5
         anthropic:
             api-key: ${CLAUDE_API_KEY:}
             chat:
                 options:
-                    model: claude-3-7-sonnet-latest
+                    model: claude-opus-4-20250514
                     temperature: 0.7
                     max-tokens: 450
         mcp:
             client:
-                request-timeout: 200s
+                request-timeout: 100s
                 toolcallback:
                     enabled: true
                 sse:
@@ -40,16 +43,3 @@ spring:
                         gcptoolbox:
                             url: ${MCPTOOLBOX_URL:}
                             sse-endpoint: /mcp/sse
-    # for async configurations
-    task:
-        execution:
-            pool:
-                core-size: 4 
-                max-size: 8 
-                queue-capacity: 100 
-                keep-alive: 100s 
-            thread-name-prefix: "claude-requests-" 
-            shutdown:
-                await-termination: true 
-                await-termination-period: 100s    
-
