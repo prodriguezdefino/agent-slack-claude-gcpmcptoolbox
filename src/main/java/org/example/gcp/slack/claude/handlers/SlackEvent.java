@@ -49,18 +49,7 @@ public class SlackEvent {
 
   public Response mention(EventsApiPayload<AppMentionEvent> payload, EventContext ctx) {
     var event = payload.getEvent();
-    var userMessageText = removeMention(event.getText());
-    var channelId = event.getChannel();
-    var threadTs = threadTs(event);
-
-    LOG.info(
-        "Received app_mention event from user {} in channel {}: {}",
-        event.getUser(),
-        channelId,
-        userMessageText);
-
-    process(ctx, event, channelId, threadTs, userMessageText);
-
+    process(ctx, event, event.getChannel(), threadTs(event), removeMention(event.getText()));
     return ctx.ack();
   }
 
@@ -84,8 +73,7 @@ public class SlackEvent {
 
   void process(EventContext ctx, Event event, String channelId, String threadTs, String message) {
     slack
-        .reply(ctx, event, "Thinking...")
-        .flatMap(__ -> slack.history(ctx, channelId, threadTs))
+        .history(ctx, channelId, threadTs)
         .flatMapMany(previousMessages -> claude.generate(message, previousMessages))
         .flatMap(text -> Flux.fromIterable(separateNewlines(text)))
         .bufferUntil(text -> text.endsWith("\n"))
