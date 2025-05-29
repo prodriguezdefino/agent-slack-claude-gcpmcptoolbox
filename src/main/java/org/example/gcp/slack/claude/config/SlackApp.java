@@ -19,13 +19,15 @@ import com.slack.api.bolt.App;
 import com.slack.api.bolt.AppConfig;
 import com.slack.api.bolt.util.SlackRequestParser;
 import com.slack.api.model.event.AppMentionEvent;
-import org.example.gcp.slack.claude.handlers.SlackMention;
+import com.slack.api.model.event.MessageChangedEvent;
+import com.slack.api.model.event.MessageEvent;
+import org.example.gcp.slack.claude.handlers.SlackEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class SlackAppConfig {
+public class SlackApp {
 
   @Value("${slack.botToken}")
   private String botToken;
@@ -39,8 +41,11 @@ public class SlackAppConfig {
   }
 
   @Bean
-  public App initSlackApp(AppConfig appConfig, SlackMention mention) {
-    return new App(appConfig).event(AppMentionEvent.class, mention::handleMentionEvent);
+  public App initSlackApp(AppConfig appConfig, SlackEvent handler) {
+    return new App(appConfig)
+        .event(AppMentionEvent.class, handler::mention)
+        .event(MessageEvent.class, handler::threadMessage)
+        .event(MessageChangedEvent.class, handler::threadMessageChange);
   }
 
   @Bean

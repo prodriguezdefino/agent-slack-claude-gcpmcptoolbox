@@ -15,13 +15,14 @@
  */
 package org.example.gcp.slack.claude.handlers;
 
+import static org.example.gcp.slack.claude.common.Utils.channel;
 import static org.example.gcp.slack.claude.common.Utils.removeMention;
 import static org.example.gcp.slack.claude.common.Utils.threadTs;
 import static org.example.gcp.slack.claude.common.Utils.toMessage;
 
 import com.slack.api.bolt.context.builtin.EventContext;
 import com.slack.api.methods.SlackApiException;
-import com.slack.api.model.event.AppMentionEvent;
+import com.slack.api.model.event.Event;
 import java.io.IOException;
 import java.util.List;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ import reactor.core.scheduler.Schedulers;
 public class SlackOperations {
   private static final Logger LOG = LoggerFactory.getLogger(SlackOperations.class);
 
-  public Mono<Boolean> reply(EventContext ctx, AppMentionEvent event, String textToSend) {
+  public Mono<Boolean> reply(EventContext ctx, Event event, String textToSend) {
     return Mono.fromCallable(
             () -> {
               try {
@@ -44,7 +45,7 @@ public class SlackOperations {
                     ctx.client()
                         .chatPostMessage(
                             r ->
-                                r.channel(event.getChannel())
+                                r.channel(channel(event))
                                     .threadTs(threadTs(event))
                                     .text(textToSend));
                 if (!post.isOk()) {

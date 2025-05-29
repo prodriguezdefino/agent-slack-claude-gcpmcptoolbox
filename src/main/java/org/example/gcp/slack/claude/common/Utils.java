@@ -23,6 +23,9 @@ import com.slack.api.bolt.response.Response;
 import com.slack.api.bolt.util.SlackRequestParser;
 import com.slack.api.methods.SlackApiException;
 import com.slack.api.model.event.AppMentionEvent;
+import com.slack.api.model.event.Event;
+import com.slack.api.model.event.MessageChangedEvent;
+import com.slack.api.model.event.MessageEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +37,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Mono;
@@ -70,19 +74,14 @@ public class Utils {
     }
   }
 
-  public static void sendErrorToSlack(
-      EventContext ctx, AppMentionEvent event, String errorMessage) {
+  public static void sendErrorToSlack(EventContext ctx, Event event, String errorMessage) {
     try {
       ctx.client()
           .chatPostMessage(
-              r ->
-                  r.channel(event.getChannel())
-                      .threadTs(event.getThreadTs() != null ? event.getThreadTs() : event.getTs())
-                      .text(errorMessage));
-      LOG.info("Sent error message to Slack user {}: {}", event.getUser(), errorMessage);
+              r -> r.channel(channel(event)).threadTs(threadTs(event)).text(errorMessage));
+      LOG.info("Sent error message to Slack: {}", errorMessage);
     } catch (IOException | SlackApiException e) {
-      LOG.error(
-          "Failed to send error message to Slack user {}: {}", event.getUser(), e.getMessage(), e);
+      LOG.error("Failed to send error message to Slack: {}", e.getMessage(), e);
     }
   }
 
@@ -96,12 +95,40 @@ public class Utils {
     return text.replaceFirst("<@.*?>", "").trim();
   }
 
-  public static String threadTs(AppMentionEvent event) {
-    return Optional.ofNullable(event.getThreadTs()).orElse(event.getTs());
+  public static String threadTs(Event event) {
+    return switch (event) {
+      case AppMentionEvent mention ->
+          Optional.ofNullable(mention.getThreadTs()).orElse(mention.getTs());
+      case MessageEvent message ->
+          Optional.ofNullable(message.getThreadTs()).orElse(message.getTs());
+      case MessageChangedEvent change ->
+          Optional.ofNullable(change.getMessage().getThreadTs())
+              .orElse(change.getMessage().getTs());
+      default ->
+          throw new IllegalArgumentException(
+              "Retrieve thread failed. Event type is not supported: " + event.getType());
+    };
+  }
+
+  public static String channel(Event event) {
+    return switch (event) {
+      case AppMentionEvent mention -> mention.getChannel();
+      case MessageEvent message -> message.getChannel();
+      case MessageChangedEvent change -> change.getChannel();
+      default ->
+          throw new IllegalArgumentException(
+              "Retrieve channel failed. Event type is not supported: " + event.getType());
+    };
   }
 
   public static Message toMessage(String userId, String botId, String text) {
     if (userId.equals(botId)) return new AssistantMessage(text);
     return new UserMessage(text);
+  }
+
+  public static String exceptionMessage(Throwable ex) {
+    return Optional.ofNullable(NestedExceptionUtils.getRootCause(ex))
+        .map(Throwable::getMessage)
+        .orElse(ex.getMessage());
   }
 }

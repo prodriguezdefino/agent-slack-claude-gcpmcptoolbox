@@ -20,12 +20,10 @@ import java.util.stream.Stream;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.publisher.Flux;
 
 /** */
 @Component
@@ -38,21 +36,17 @@ public class ClaudeChat {
     this.systemPrompt = systemPrompt;
   }
 
-  public Mono<ChatResponse> generate(String message, List<Message> messages) {
-    return Mono.fromCallable(
-            () ->
-                chatClient
-                    .prompt(
-                        new Prompt(
-                            Stream.of(
-                                    List.<Message>of(new UserMessage(message)),
-                                    messages,
-                                    List.of(systemPrompt.createMessage()))
-                                .flatMap(List::stream)
-                                .toList()))
-                    .call()
-                    .chatResponse())
-        .retry(5)
-        .subscribeOn(Schedulers.boundedElastic());
+  public Flux<String> generate(String message, List<Message> messages) {
+    return chatClient
+        .prompt(
+            new Prompt(
+                Stream.of(
+                        List.<Message>of(new UserMessage(message)),
+                        messages,
+                        List.of(systemPrompt.createMessage()))
+                    .flatMap(List::stream)
+                    .toList()))
+        .stream()
+        .content();
   }
 }

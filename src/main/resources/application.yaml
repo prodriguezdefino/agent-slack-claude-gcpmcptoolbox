@@ -3,6 +3,7 @@ logging:
         org.springframework.web: DEBUG
         org.springframework.core.codec: DEBUG
         org.springframework.ai: DEBUG
+        org.springframework: DEBUG
 slack:
     botToken: ${SLACK_BOT_TOKEN:}
     signingSecret: ${SLACK_SIGNING_SECRET:}
@@ -19,23 +20,30 @@ management:
 server:
     port: 8080
 spring:
+    threads:
+        virtual:
+            enabled: true
     # web clients that interact will LLM needs more patience
-    webflux:
+    http:
         client:
-            connect-timeout: 5s
-            response-timeout: 200s
+            reactive:
+              read-timeout: 30s
+              connect-timeout: 5s
+              response-timeout: 400s
     # Claude API Configuration
     ai:
+        retry:
+            max-attempts: 5
         anthropic:
             api-key: ${CLAUDE_API_KEY:}
             chat:
                 options:
                     model: claude-opus-4-20250514
                     temperature: 0.7
-                    max-tokens: 450
+                    max-tokens: 500
         mcp:
             client:
-                request-timeout: 100s
+                request-timeout: 300s
                 toolcallback:
                     enabled: true
                 sse:

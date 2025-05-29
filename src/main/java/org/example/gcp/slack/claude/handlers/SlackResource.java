@@ -29,11 +29,11 @@ import reactor.core.publisher.Mono;
 
 /** */
 @Component
-public class SlackHandler {
+public class SlackResource {
   private final App slackApp;
   private final SlackRequestParser requestParser;
 
-  public SlackHandler(App slackApp, SlackRequestParser requestParser) {
+  public SlackResource(App slackApp, SlackRequestParser requestParser) {
     this.slackApp = slackApp;
     this.requestParser = requestParser;
   }
