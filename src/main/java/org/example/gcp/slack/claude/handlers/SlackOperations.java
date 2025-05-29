@@ -51,7 +51,6 @@ public class SlackOperations {
                 if (!post.isOk()) {
                   throw new RuntimeException("Problems posting a reply: " + post.getError());
                 }
-                LOG.info("Successfully sent reply to Slack.");
                 return true;
               } catch (IOException | SlackApiException e) {
                 var msg = String.format("Error sending Slack response: %s", e.getMessage());
@@ -69,11 +68,7 @@ public class SlackOperations {
                 var history =
                     ctx.client()
                         .conversationsReplies(
-                            cr ->
-                                cr.channel(channelId)
-                                    .ts(threadId)
-                                    .token(ctx.getBotToken())
-                                    .limit(10));
+                            cr -> cr.channel(channelId).ts(threadId).token(ctx.getBotToken()));
                 if (history.isOk()) {
                   return history.getMessages().stream()
                       .map(

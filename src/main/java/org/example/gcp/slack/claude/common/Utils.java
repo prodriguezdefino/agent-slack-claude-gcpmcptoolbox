@@ -27,6 +27,7 @@ import com.slack.api.model.event.Event;
 import com.slack.api.model.event.MessageChangedEvent;
 import com.slack.api.model.event.MessageEvent;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,11 +37,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /** */
 public class Utils {
@@ -67,11 +68,15 @@ public class Utils {
   }
 
   public static Mono<Response> processSlackRequest(App slackApp, Request<?> slackRequest) {
-    try {
-      return Mono.just(slackApp.run(slackRequest));
-    } catch (Exception ex) {
-      return Mono.error(ex);
-    }
+    return Mono.fromCallable(
+            () -> {
+              try {
+                return slackApp.run(slackRequest);
+              } catch (Exception ex) {
+                throw new RuntimeException("Problems processing slack application request", ex);
+              }
+            })
+        .subscribeOn(Schedulers.boundedElastic());
   }
 
   public static void sendErrorToSlack(EventContext ctx, Event event, String errorMessage) {
@@ -85,10 +90,8 @@ public class Utils {
     }
   }
 
-  public static String toText(ChatResponse chatResponse) {
-    return chatResponse.getResults().stream()
-        .map(gen -> gen.getOutput().getText())
-        .collect(Collectors.joining("\n"));
+  public static String toText(List<String> bufferedResponse) {
+    return bufferedResponse.stream().collect(Collectors.joining());
   }
 
   public static String removeMention(String text) {
@@ -130,5 +133,17 @@ public class Utils {
     return Optional.ofNullable(NestedExceptionUtils.getRootCause(ex))
         .map(Throwable::getMessage)
         .orElse(ex.getMessage());
+  }
+
+  public static String errorMessage(Throwable ex) {
+    return """
+        Problems executing the task, you can try retrying it.
+        Detailed cause:  """
+        + exceptionMessage(ex);
+  }
+
+  public static List<String> separateNewlines(String text) {
+    var delimiter = "<DELIMITER/>";
+    return Arrays.asList(text.replace("\n", "\n" + delimiter).split(delimiter));
   }
 }

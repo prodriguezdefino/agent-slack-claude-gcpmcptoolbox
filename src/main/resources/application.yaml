@@ -1,9 +1,9 @@
 logging:
     level:
-        org.springframework.web: DEBUG
-        org.springframework.core.codec: DEBUG
-        org.springframework.ai: DEBUG
-        org.springframework: DEBUG
+        org.springframework.web: INFO
+        org.springframework.core.codec: INFO
+        org.springframework.ai: INFO
+        org.springframework: INFO
 slack:
     botToken: ${SLACK_BOT_TOKEN:}
     signingSecret: ${SLACK_SIGNING_SECRET:}

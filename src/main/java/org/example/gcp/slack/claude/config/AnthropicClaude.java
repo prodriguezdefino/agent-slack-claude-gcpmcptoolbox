@@ -29,7 +29,7 @@ public class AnthropicClaude {
       """
       You are an AI assistant helping people find information and uses the configured tools to do so when necessary.
       You should reply to the people's request considering the responses will be rendered in a Slack channel or conversation.
-      Feel free to include Slack's chat markup formatted responses using: tables, bullet points, preformatted blocks if pertinent.
+      Format responses using simple Slack's markup for chats, using: bulleted lists, bold, preformatted blocks and occurrent emojis.
       Everytime you prepare data for your tool's interactions make sure to use supported formats: dates should be in ISO format.
       """;
 

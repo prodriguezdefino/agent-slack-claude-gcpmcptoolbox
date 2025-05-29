@@ -15,10 +15,12 @@
  */
 package org.example.gcp.slack.claude.handlers;
 
+import static org.example.gcp.slack.claude.common.Utils.errorMessage;
 import static org.example.gcp.slack.claude.common.Utils.removeMention;
 import static org.example.gcp.slack.claude.common.Utils.sendErrorToSlack;
+import static org.example.gcp.slack.claude.common.Utils.separateNewlines;
 import static org.example.gcp.slack.claude.common.Utils.threadTs;
-import static org.example.gcp.slack.claude.common.Utils.exceptionMessage;
+import static org.example.gcp.slack.claude.common.Utils.toText;
 
 import com.slack.api.app_backend.events.payload.EventsApiPayload;
 import com.slack.api.bolt.context.builtin.EventContext;
@@ -27,11 +29,10 @@ import com.slack.api.model.event.AppMentionEvent;
 import com.slack.api.model.event.Event;
 import com.slack.api.model.event.MessageChangedEvent;
 import com.slack.api.model.event.MessageEvent;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 
 /** */
 @Component
@@ -66,18 +67,7 @@ public class SlackEvent {
   public Response threadMessage(EventsApiPayload<MessageEvent> payload, EventContext ctx) {
     var event = payload.getEvent();
     if (event.getThreadTs() != null) {
-      var userMessageText = event.getText();
-      var channelId = event.getChannel();
-      var threadTs = event.getThreadTs();
-      LOG.info(
-          "Received message event on thread {} from user {} (is bot: {}) in channel {}: {}",
-          threadTs,
-          event.getUser(),
-          event.getUser().equals(ctx.getBotUserId()),
-          channelId,
-          userMessageText);
-
-      process(ctx, event, channelId, threadTs, userMessageText);
+      process(ctx, event, event.getChannel(), event.getThreadTs(), event.getText());
     }
     return ctx.ack();
   }
@@ -87,18 +77,7 @@ public class SlackEvent {
     var event = payload.getEvent();
     var message = event.getMessage();
     if (message.getThreadTs() != null) {
-      var userMessageText = message.getText();
-      var channelId = event.getChannel();
-      var threadTs = message.getThreadTs();
-      LOG.info(
-          "Received changed message event on thread {} from user {} (is bot: {}) in channel {}: {}",
-          threadTs,
-          message.getUser(),
-          message.getUser().equals(ctx.getBotUserId()),
-          channelId,
-          userMessageText);
-
-      process(ctx, event, channelId, threadTs, userMessageText);
+      process(ctx, event, event.getChannel(), message.getThreadTs(), message.getText());
     }
     return ctx.ack();
   }
@@ -108,19 +87,14 @@ public class SlackEvent {
         .reply(ctx, event, "Thinking...")
         .flatMap(__ -> slack.history(ctx, channelId, threadTs))
         .flatMapMany(previousMessages -> claude.generate(message, previousMessages))
-        .collectList()
-        .flatMap(
-            llmResponse ->
-                slack.reply(ctx, event, llmResponse.stream().collect(Collectors.joining("\n"))))
+        .flatMap(text -> Flux.fromIterable(separateNewlines(text)))
+        .bufferUntil(text -> text.endsWith("\n"))
+        .map(lineResponse -> toText(lineResponse))
+        .filter(text -> !text.isBlank())
+        .flatMap(textResponse -> slack.reply(ctx, event, textResponse).flux())
         .subscribe(
-            __ -> LOG.info("Sent responses to Slack."),
-            ex ->
-                sendErrorToSlack(
-                    ctx,
-                    event,
-                    """
-                    Problems executing the task, you can try retrying it.
-                    Detailed cause: """
-                        + exceptionMessage(ex)));
+            __ -> LOG.info("Line sent to Slack thread."),
+            ex -> sendErrorToSlack(ctx, event, errorMessage(ex)),
+            () -> LOG.info("All messages sent"));
   }
 }
