@@ -4,9 +4,12 @@ logging:
         org.springframework.core.codec: INFO
         org.springframework.ai: INFO
         org.springframework: INFO
+        org.springframework.web.reactive.function.client: DEBUG
+        io.modelcontextprotocol: DEBUG
 slack:
-    botToken: ${SLACK_BOT_TOKEN:}
-    signingSecret: ${SLACK_SIGNING_SECRET:}
+    bot-token: ${SLACK_BOT_TOKEN:}
+    signing-secret: ${SLACK_SIGNING_SECRET:}
+    grouped-lines-count: 5
 # Spring Boot Actuator - GCP uses /health
 management:
     endpoints:
@@ -22,14 +25,14 @@ server:
 spring:
     threads:
         virtual:
-            enabled: true
+            enabled: false
     # web clients that interact will LLM needs more patience
     http:
         client:
             reactive:
-              read-timeout: 30s
+              read-timeout: 20s
               connect-timeout: 5s
-              response-timeout: 400s
+              response-timeout: 120s
     # Claude API Configuration
     ai:
         retry:
@@ -43,7 +46,12 @@ spring:
                     max-tokens: 500
         mcp:
             client:
-                request-timeout: 300s
+                enabled: false
+                initialized: false
+                request-timeout: 30s
+                name: gcpdatabasetoolbox
+                version: 1.0.0
+                type: ASYNC
                 toolcallback:
                     enabled: true
                 sse:

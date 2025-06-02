@@ -31,6 +31,7 @@ import com.slack.api.model.event.MessageChangedEvent;
 import com.slack.api.model.event.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
@@ -41,10 +42,15 @@ public class SlackEvent {
 
   private final ClaudeChat claude;
   private final SlackOperations slack;
+  private final Integer groupedLinesCount;
 
-  public SlackEvent(ClaudeChat claude, SlackOperations send) {
+  public SlackEvent(
+      ClaudeChat claude,
+      SlackOperations send,
+      @Value("${slack.grouped-lines-count}") Integer lines) {
     this.claude = claude;
     this.slack = send;
+    this.groupedLinesCount = lines;
   }
 
   public Response mention(EventsApiPayload<AppMentionEvent> payload, EventContext ctx) {
@@ -75,13 +81,17 @@ public class SlackEvent {
     slack
         .history(ctx, channelId, threadTs)
         .flatMapMany(previousMessages -> claude.generate(message, previousMessages))
+        // llm generates a text stream, and we want to iterate through the lines
         .flatMap(text -> Flux.fromIterable(separateNewlines(text)))
+        // we will be buffering text until we find a newline char
         .bufferUntil(text -> text.endsWith("\n"))
-        .map(lineResponse -> toText(lineResponse))
-        .filter(text -> !text.isBlank())
-        .flatMap(textResponse -> slack.reply(ctx, event, textResponse).flux())
+        // remove all empty lines
+        .filter(words -> words.size() > 1 || !words.stream().findFirst().orElse("").isBlank())
+        // buffer again to condense more text to be sent to Slack at a time
+        .buffer(groupedLinesCount)
+        .flatMap(textResponse -> slack.reply(ctx, event, toText(textResponse)).flux())
         .subscribe(
-            __ -> LOG.info("Line sent to Slack thread."),
+            __ -> LOG.debug("Line sent to Slack thread."),
             ex -> sendErrorToSlack(ctx, event, errorMessage(ex)),
             () -> LOG.info("All messages sent"));
   }

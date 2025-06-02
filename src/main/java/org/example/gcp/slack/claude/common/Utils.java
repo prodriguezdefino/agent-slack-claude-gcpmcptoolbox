@@ -90,8 +90,8 @@ public class Utils {
     }
   }
 
-  public static String toText(List<String> bufferedResponse) {
-    return bufferedResponse.stream().collect(Collectors.joining());
+  public static String toText(List<List<String>> bufferedResponses) {
+    return bufferedResponses.stream().flatMap(List::stream).collect(Collectors.joining());
   }
 
   public static String removeMention(String text) {
