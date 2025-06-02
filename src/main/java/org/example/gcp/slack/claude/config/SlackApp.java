@@ -29,10 +29,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SlackApp {
 
-  @Value("${slack.botToken}")
+  @Value("${slack.bot-token}")
   private String botToken;
 
-  @Value("${slack.signingSecret}")
+  @Value("${slack.signing-secret}")
   private String signingSecret;
 
   @Bean
