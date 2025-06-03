@@ -19,6 +19,7 @@ locals {
     project_id = var.project_id
     dataset_id = local.bq_dataset
   })
+  mcp_server_uri = "${google_cloud_run_v2_service.mcptoolbox.uri}"
 }
 
 resource "google_secret_manager_secret" "tools_yaml" {
@@ -72,7 +73,7 @@ resource "google_cloud_run_v2_service" "mcptoolbox" {
   template {
     scaling {
       min_instance_count = 1
-      max_instance_count = 5
+      max_instance_count = 1
     }
     service_account = google_service_account.toolbox.email
     volumes {
@@ -87,6 +88,12 @@ resource "google_cloud_run_v2_service" "mcptoolbox" {
     }
     containers {
       image = "us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest"
+      resources {
+        limits = {
+          memory = "1024Mi"
+          cpu    = "2"
+        }
+      }
       volume_mounts {
         name       = "secrets-volume"
         mount_path = "/app/config"

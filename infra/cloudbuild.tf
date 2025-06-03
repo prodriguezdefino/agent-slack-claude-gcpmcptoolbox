@@ -25,6 +25,7 @@ resource "null_resource" "cloud_build_on_change" {
   triggers = {
     app_src_hash = data.archive_file.app_src_archive.output_sha,
     pom_xml_hash = filesha256("../pom.xml")
+    dockerfile_hash = filesha256("../Dockerfile")
   }
 
   provisioner "local-exec" {
@@ -33,7 +34,7 @@ resource "null_resource" "cloud_build_on_change" {
       gcloud builds submit . \
         --project ${var.project_id} \
         --config cloudbuild.yaml \
-        --substitutions _SERVICE_NAME=${var.service_name},_REGION=${var.region},_ARTIFACT_REGISTRY_REPO_NAME=${google_artifact_registry_repository.default.repository_id},_MCPTOOLBOX_URL=${google_cloud_run_v2_service.mcptoolbox.uri} \
+        --substitutions _SERVICE_NAME=${var.service_name},_REGION=${var.region},_ARTIFACT_REGISTRY_REPO_NAME=${google_artifact_registry_repository.default.repository_id},_MCPTOOLBOX_URL=${local.mcp_server_uri} \
         --quiet
     EOT
     working_dir = "../"
