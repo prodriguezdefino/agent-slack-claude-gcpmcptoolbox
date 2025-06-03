@@ -4,8 +4,9 @@ logging:
         org.springframework.core.codec: INFO
         org.springframework.ai: INFO
         org.springframework: INFO
-        org.springframework.web.reactive.function.client: DEBUG
-        io.modelcontextprotocol: DEBUG
+        org.springframework.web.reactive.function.client: INFO
+        io.modelcontextprotocol: INFO
+        reactor.netty.http.client: INFO
 slack:
     bot-token: ${SLACK_BOT_TOKEN:}
     signing-secret: ${SLACK_SIGNING_SECRET:}
@@ -46,11 +47,10 @@ spring:
                     max-tokens: 500
         mcp:
             client:
-                enabled: false
-                initialized: false
+                enabled: true
+                initialized: true
                 request-timeout: 30s
                 name: gcpdatabasetoolbox
-                version: 1.0.0
                 type: ASYNC
                 toolcallback:
                     enabled: true
