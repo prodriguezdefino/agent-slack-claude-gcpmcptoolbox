@@ -15,14 +15,16 @@
  */
 package org.example.gcp.slack.claude.config;
 
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
-import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.mcp.client.autoconfigure.properties.McpClientCommonProperties;
+import org.springframework.ai.mcp.client.autoconfigure.properties.McpSseClientProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /** */
 @Configuration
+@EnableConfigurationProperties({McpClientCommonProperties.class, McpSseClientProperties.class})
 public class AnthropicClaude {
 
   private final String systemText =
@@ -36,10 +38,5 @@ public class AnthropicClaude {
   @Bean
   public SystemPromptTemplate initSystemTemplate() {
     return new SystemPromptTemplate(systemText);
-  }
-
-  @Bean
-  public ChatClient setupTools(ChatClient.Builder chatClientBuilder, ToolCallbackProvider tools) {
-    return chatClientBuilder.defaultToolCallbacks(tools).build();
   }
 }
