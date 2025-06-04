@@ -127,6 +127,7 @@ public class ClaudeChat {
         mcpAsyncClients -> {
           try (var __ = new McpClientAutoConfiguration.CloseableMcpAsyncClients(mcpAsyncClients)) {
             return this.chatClientBuilder
+                .clone()
                 .defaultToolCallbacks(new AsyncMcpToolCallbackProvider(mcpAsyncClients))
                 .build()
                 .prompt(
