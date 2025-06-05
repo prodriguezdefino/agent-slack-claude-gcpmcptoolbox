@@ -23,19 +23,15 @@ import io.modelcontextprotocol.spec.McpSchema;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.ai.mcp.AsyncMcpToolCallbackProvider;
-import org.springframework.ai.mcp.client.autoconfigure.McpClientAutoConfiguration;
 import org.springframework.ai.mcp.client.autoconfigure.NamedClientMcpTransport;
 import org.springframework.ai.mcp.client.autoconfigure.properties.McpClientCommonProperties;
 import org.springframework.ai.mcp.client.autoconfigure.properties.McpSseClientProperties;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -44,28 +40,26 @@ import reactor.core.publisher.Mono;
 /** */
 @Component
 public class ClaudeChat {
-  private static final Logger LOG = LoggerFactory.getLogger(ClaudeChat.class);
-
   private final ChatClient.Builder chatClientBuilder;
   private final SystemPromptTemplate systemPrompt;
   private final McpClientCommonProperties mcpCommonProperties;
   private final McpSseClientProperties mcpSseProperties;
-  private final ObjectProvider<WebClient.Builder> webClientBuilderProvider;
-  private final ObjectProvider<ObjectMapper> objectMapperProvider;
+  private final WebClient.Builder webClientBuilder;
+  private final ObjectMapper objectMapper;
 
   public ClaudeChat(
       ChatClient.Builder chatClientBuilder,
       SystemPromptTemplate systemPrompt,
       McpClientCommonProperties mcpCommonProperties,
       McpSseClientProperties mcpSseProperties,
-      ObjectProvider<WebClient.Builder> webClientBuilder,
-      ObjectProvider<ObjectMapper> objectMapper) {
+      WebClient.Builder webClientBuilder,
+      ObjectMapper objectMapper) {
     this.chatClientBuilder = chatClientBuilder;
     this.systemPrompt = systemPrompt;
     this.mcpCommonProperties = mcpCommonProperties;
     this.mcpSseProperties = mcpSseProperties;
-    this.webClientBuilderProvider = webClientBuilder;
-    this.objectMapperProvider = objectMapper;
+    this.webClientBuilder = webClientBuilder;
+    this.objectMapper = objectMapper;
   }
 
   private String connectedClientName(String clientName, String serverConnectionName) {
@@ -81,15 +75,11 @@ public class ClaudeChat {
                         new NamedClientMcpTransport(
                             entry.getKey(),
                             WebFluxSseClientTransport.builder(
-                                    webClientBuilderProvider
-                                        .getIfAvailable(WebClient::builder)
-                                        .clone()
-                                        .baseUrl(entry.getValue().url()))
+                                    webClientBuilder.clone().baseUrl(entry.getValue().url()))
                                 .sseEndpoint(
                                     Optional.ofNullable(entry.getValue().sseEndpoint())
                                         .orElse("/sse"))
-                                .objectMapper(
-                                    objectMapperProvider.getIfAvailable(ObjectMapper::new))
+                                .objectMapper(objectMapper)
                                 .build()))
                 .map(
                     transport ->
@@ -104,7 +94,6 @@ public class ClaudeChat {
                 .map(
                     client -> {
                       client.initialize().block();
-                      LOG.info("MCP clients initialized.");
                       return client;
                     })
                 .toList());
@@ -113,8 +102,7 @@ public class ClaudeChat {
   Mono<Boolean> cleanup(List<McpAsyncClient> clients) {
     return Mono.fromCallable(
         () -> {
-          LOG.info("closing on MCP clients...");
-          // clients.stream().map(client -> client.closeGracefully()).toList();
+          clients.stream().map(client -> client.closeGracefully()).toList();
           return true;
         });
   }
@@ -124,9 +112,8 @@ public class ClaudeChat {
         // McpClients Initialization (resourceAsync)
         prepareClients(),
         // MacpClients usage for Chat client as tools (resourceClosure)
-        mcpAsyncClients -> {
-          try (var __ = new McpClientAutoConfiguration.CloseableMcpAsyncClients(mcpAsyncClients)) {
-            return this.chatClientBuilder
+        mcpAsyncClients ->
+            this.chatClientBuilder
                 .clone()
                 .defaultToolCallbacks(new AsyncMcpToolCallbackProvider(mcpAsyncClients))
                 .build()
@@ -139,9 +126,7 @@ public class ClaudeChat {
                             .flatMap(List::stream)
                             .toList()))
                 .stream()
-                .content();
-          }
-        },
+                .content(),
         // McpClients cleanup (asyncCleanup)
         mcpAsyncClients -> cleanup(mcpAsyncClients));
   }

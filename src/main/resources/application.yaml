@@ -1,12 +1,12 @@
 logging:
     level:
         org.springframework.web: INFO
-        org.springframework.core.codec: DEBUG
-        org.springframework.ai: DEBUG
+        org.springframework.core.codec: INFO
+        org.springframework.ai: INFO
         org.springframework: INFO
-        org.springframework.web.reactive.function.client: DEBUG
-        io.modelcontextprotocol: DEBUG
-        reactor.netty.http.client: DEBUG
+        org.springframework.web.reactive.function.client: INFO
+        io.modelcontextprotocol: INFO
+        reactor.netty.http.client: INFO
 slack:
     bot-token: ${SLACK_BOT_TOKEN:}
     signing-secret: ${SLACK_SIGNING_SECRET:}
