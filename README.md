@@ -1,6 +1,6 @@
-# Slack Claude GCP MCPtoolbox Integration
+# Custom GenAI Agent: Hotel Booking made easy through Slack - Claude - GCP MCPtoolbox Integration
 
-This repository contains a integration example for a Slack application, implemented with Slackbot service, which integrates chat-like communication with Anthropic's Claude LLM and can discover Google Cloud Platform (GCP) datasources through an MCP based server. The core application is built using Java and Spring Boot.
+This repository contains a custom GenAI Agent specialized in handling Hotel's booking using a conversational UX. The integrated solution is built using Anthropic's Claude LLM as the Agent's brain, integrating data access services exposing datasources hosted in Google Cloud Platform (GCP) through MCP and the conversational UX is based on a Slack application which serves also as the Agent's memory (based on threaded conversations). The Agent service application is built using Java and Spring Boot AI starters.
 
 All the code included in this project is intended for demonstration purposes only. It is not intended for use in a production environment. Permissions granted to the underlying resources are too broad, so is important to deploy this demo with caution and not use production infrastructure, datasources, etc.
 
@@ -10,7 +10,7 @@ This solution integrates the following components:
 
 * Slack, through the implementation of a Slackbot, using Bolt's SDK for Java.
 * GCP CloudRun as the runtime for our services.
-* BigQuery as the data repository we want to access.
+* BigQuery as the data repository we want to expose to our Agent.
 * Anthropic's Claude LLM, who is in charge of orchestrating which datasources use and trigger needed queries or updates.
 * [MCP Toolbox for Databases](https://googleapis.github.io/genai-toolbox/getting-started/introduction/), deployed as a CloudRun service and in charge of exposing the access to GCP databases to LLMs through MCP.
 * Spring Boot service exposing the Slackbot functionality.

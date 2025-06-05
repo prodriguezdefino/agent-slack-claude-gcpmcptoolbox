@@ -47,13 +47,12 @@ spring:
                     max-tokens: 500
         mcp:
             client:
-                enabled: true
-                initialized: true
+                enabled: false
+                initialized: false
                 request-timeout: 30s
                 name: gcpdatabasetoolbox
-                type: ASYNC
                 toolcallback:
-                    enabled: true
+                    enabled: false
                 sse:
                     connections:
                         gcptoolbox:

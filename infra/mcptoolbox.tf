@@ -88,17 +88,11 @@ resource "google_cloud_run_v2_service" "mcptoolbox" {
     }
     containers {
       image = "us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest"
-      resources {
-        limits = {
-          memory = "1024Mi"
-          cpu    = "2"
-        }
-      }
       volume_mounts {
         name       = "secrets-volume"
         mount_path = "/app/config"
       }
-      args = ["--tools-file=/app/config/tools.yaml", "--log-level=debug", "--address=0.0.0.0", "--port=8080"]
+      args = ["--tools-file=/app/config/tools.yaml", "--address=0.0.0.0", "--port=8080"]
       ports {
         container_port = 8080
       }
