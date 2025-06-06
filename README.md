@@ -4,6 +4,34 @@ This repository contains a custom GenAI Agent specialized in handling Hotel's bo
 
 All the code included in this project is intended for demonstration purposes only. It is not intended for use in a production environment. Permissions granted to the underlying resources are too broad, so is important to deploy this demo with caution and not use production infrastructure, datasources, etc.
 
+## Example User Interaction
+
+Once all the solution's components are deployed to GCP and Slack application settings are completed and installed on a Slack Workspace, we can start asking questions to our Agent by mentioning it on a channel. But first, lets quickly check the BigQuery table containing the data we will be accessing through our conversational Agent.
+
+![BigQuery table with Hotel's data](/images/bq1.png)
+
+In the table there are a handful of hotel related entries, including the hotel's internal identifier, its name, city location price tier, available checkin and checkout dates and if they are currently booked. We have defined through our MCP Toolbox [configuration](/infra/mcptoolbox/tools.yaml.tpl) the expected access patterns, as SQL statements, for our Agent to use as tools:
+* Searches by name or location
+* Book a hotels by its ID
+* Update checkin and checkout dates by ID and ISO datetime format
+* Cancel a booking by ID
+
+Once our Agent configures the LLM with the toolbox, it shares the possible direct interactions the LLM can trigger when provided with the right parameters (ID, names, location, ISO datetimes). But given that an LLM is really good to interpret natural language, recognize patterns and formulate plans of execution, we can stretch the previously defined interactions letting the LLM fit the right requests on the expected tools.
+
+To test that, lets try to request multiple locations at once (even though our interface only expect one) and make multiple cancellation, bookings and checkin/checkout updates all at once:
+
+![Chat interaction](/images/chat1.png)
+
+In this case our Agent correctly identifies the use case and triggers multiple calls to the configured tools to obtain the expected results (3 hotels in Basel and none in Barcelona). Next we can see how the Agent correctly completes our cancellation/booking/update request all in once action as triggered by our user.
+
+We can check then that our requested changes were correctly persisted, after our interactions.
+
+![BigQuery table with Hotel's data](/images/bq2.png)
+
+Our Agent demonstrate how powerful a conversational UX implemented through a specific Agent, MCP and a correct toolset to achieve complex task in a particular domain.
+
+The example data and functionalities are extracted directly from the MCP Toolbox [page](https://googleapis.github.io/genai-toolbox/samples/bigquery/mcp_quickstart/).
+
 ## Components
 
 This solution integrates the following components:
@@ -114,22 +142,6 @@ To integrate the bot with your Slack workspace, you need to create and configure
     After the script completes successfully, the Slack bot should be deployed and running on Cloud Run.
 
 Once these steps are completed and the application is redeployed with the correct Slack tokens and Claude API key, your bot should be able to connect to your Slack workspace and respond to user mentions. Be in mind that some responses may take longer than others, some roundtrips can take long (Slackbot service - LLM - Slackbot service - MCP interaction - new LLM interaction - response to Slack).
-
-## Example User Interaction
-
-Once all the components are deployed and configured correctly, and the Slack app was added to a workspace we can ask a question to the bot by mentioning it on a channel. But first lets check the BigQuery table containing the data we will be trying to query.
-
-![BigQuery table with Hotel's data](/images/bq1.png)
-
-We can then ask the bot to retrieve hotels based on their location:
-
-![Chat interaction](/images/chat1.png)
-
-After the Slackbot completes the interaction we can inspect the BigQuery table to see the changes propagated.
-
-![BigQuery table with Hotel's data](/images/bq2.png)
-
-The example data and functionalities are extracted directly from the MCP Toolbox [page](https://googleapis.github.io/genai-toolbox/samples/bigquery/mcp_quickstart/). In there you can see what other interactions can be used right away while accessing and updating data on BigQuery, and also how to add other GCP databases to the MCP service configured.
 
 ## Cleanup
 
