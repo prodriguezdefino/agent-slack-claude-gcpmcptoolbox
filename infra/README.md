@@ -122,4 +122,3 @@ To remove all the resources created by this Terraform configuration:
 terraform destroy
 ```
 Type `yes` when prompted.
-```
