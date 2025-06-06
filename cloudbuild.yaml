@@ -5,8 +5,6 @@ steps:
       - 'build'
       - '-t'
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REGISTRY_REPO_NAME}/${_SERVICE_NAME}:latest'
-      - --build-arg
-      - MCPTOOLBOX_URL_ARG=${_MCPTOOLBOX_URL}
       - '.'
     id: 'Build Docker Image'
 
@@ -26,7 +24,6 @@ substitutions:
   _SERVICE_NAME: 'spring-boot-app' # Default value
   _REGION: 'us-central1' # Default value
   _ARTIFACT_REGISTRY_REPO_NAME: 'spring-boot-app-images' # Default value
-  _MCPTOOLBOX_URL: 'localhost:5000' # Default value
 
 options:
   logging: CLOUD_LOGGING_ONLY
