@@ -32,6 +32,9 @@ resource "google_cloud_run_v2_service" "slackapp_service" {
     }
     containers {
       image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.default.repository_id}/${var.service_name}:latest"
+      resources {
+        startup_cpu_boost = true
+      }
       ports {
         container_port = 8080
       }

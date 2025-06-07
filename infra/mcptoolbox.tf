@@ -92,7 +92,7 @@ resource "google_cloud_run_v2_service" "mcptoolbox" {
         name       = "secrets-volume"
         mount_path = "/app/config"
       }
-      args = ["--tools-file=/app/config/tools.yaml", "--address=0.0.0.0", "--port=8080"]
+      args = ["--tools-file=/app/config/tools.yaml", "--address=0.0.0.0", "--port=8080", "--log-level=debug"]
       ports {
         container_port = 8080
       }
