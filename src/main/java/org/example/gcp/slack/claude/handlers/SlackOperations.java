@@ -32,11 +32,25 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-/** */
+/**
+ * Provides methods for interacting with the Slack API. This class handles operations like sending
+ * messages to Slack channels/threads and retrieving conversation history. All operations are
+ * performed asynchronously.
+ */
 @Component
 public class SlackOperations {
   private static final Logger LOG = LoggerFactory.getLogger(SlackOperations.class);
 
+  /**
+   * Sends a reply message to the Slack thread from which an event originated.
+   *
+   * @param ctx The Slack event context, used for accessing the Slack client.
+   * @param event The original event that triggered the reply. Used to determine the channel and
+   *     thread.
+   * @param textToSend The text message to send as a reply.
+   * @return A {@link Mono} emitting {@code true} if the message was posted successfully, or an
+   *     error if posting failed.
+   */
   public Mono<Boolean> reply(EventContext ctx, Event event, String textToSend) {
     return Mono.fromCallable(
             () -> {
@@ -61,6 +75,16 @@ public class SlackOperations {
         .subscribeOn(Schedulers.boundedElastic());
   }
 
+  /**
+   * Retrieves the message history from a specific Slack channel and thread. The messages are
+   * converted into a list of Spring AI {@link Message} objects.
+   *
+   * @param ctx The Slack event context, used for accessing the Slack client and bot user ID.
+   * @param channelId The ID of the Slack channel.
+   * @param threadId The timestamp (ts) of the parent message in the thread.
+   * @return A {@link Mono} emitting a list of {@link Message} objects representing the conversation
+   *     history, or an error if history retrieval failed.
+   */
   public Mono<List<Message>> history(EventContext ctx, String channelId, String threadId) {
     return Mono.fromCallable(
             () -> {

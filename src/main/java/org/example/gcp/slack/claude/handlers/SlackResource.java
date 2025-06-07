@@ -27,7 +27,12 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-/** */
+/**
+ * Spring WebFlux functional endpoint for handling HTTP requests from Slack. This class receives
+ * incoming requests, typically events or interactions from Slack, parses them using {@link
+ * SlackRequestParser}, and then dispatches them to the Slack Bolt {@link App} for processing. It
+ * then formulates an HTTP response.
+ */
 @Component
 public class SlackResource {
   private final App slackApp;
@@ -38,6 +43,16 @@ public class SlackResource {
     this.requestParser = requestParser;
   }
 
+  /**
+   * Handles incoming HTTP POST requests from Slack, such as event subscriptions or interactive
+   * payloads. The method parses the Slack request, processes it using the Slack Bolt {@link App},
+   * and then wraps the Bolt app's response into a {@link ServerResponse}.
+   *
+   * @param request The incoming {@link ServerRequest} from Slack.
+   * @return A {@link Mono} of {@link ServerResponse} to be sent back to Slack. This will typically
+   *     be an acknowledgment response. In case of errors during processing, a 500 status response
+   *     is returned.
+   */
   public Mono<ServerResponse> chatInteraction(ServerRequest request) {
     return request
         .bodyToMono(String.class)

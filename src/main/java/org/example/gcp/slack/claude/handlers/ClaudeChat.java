@@ -29,7 +29,11 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/** */
+/**
+ * Handles interactions with the Claude AI model. This class is responsible for managing the
+ * lifecycle of MCP (Model Context Protocol) clients, preparing the chat prompts, and streaming the
+ * AI-generated responses.
+ */
 @Component
 public class ClaudeChat {
   private final ChatClient.Builder chatClientBuilder;
@@ -57,6 +61,16 @@ public class ClaudeChat {
         });
   }
 
+  /**
+   * Generates a response from the Claude AI model based on the given message and message history.
+   *
+   * <p>Manages the lifecycle of MCP clients for this specific generation request, ensuring they are
+   * initialized before use and cleaned up afterwards.
+   *
+   * @param message The current user message to send to the AI.
+   * @param messages A list of previous messages in the conversation history.
+   * @return A Flux<String> that streams the AI-generated response content.
+   */
   public Flux<String> generate(String message, List<Message> messages) {
     return Flux.usingWhen(
         // McpClients Initialization (resourceAsync)

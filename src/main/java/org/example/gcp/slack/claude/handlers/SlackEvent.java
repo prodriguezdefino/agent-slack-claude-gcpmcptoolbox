@@ -35,7 +35,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
-/** */
+/**
+ * Handles incoming Slack events such as app mentions and messages in threads. This class processes
+ * these events, interacts with {@link ClaudeChat} to get AI-generated responses, and uses {@link
+ * SlackOperations} to send replies back to the appropriate Slack channel and thread.
+ */
 @Component
 public class SlackEvent {
   private static final Logger LOG = LoggerFactory.getLogger(SlackEvent.class);
@@ -53,12 +57,29 @@ public class SlackEvent {
     this.groupedLinesCount = lines;
   }
 
+  /**
+   * Handles an 'app_mention' event from Slack. This is triggered when the application is mentioned
+   * directly in a channel. It processes the message and sends a reply back to the same thread.
+   *
+   * @param payload The Slack event payload for an app mention.
+   * @param ctx The event context provided by Slack Bolt.
+   * @return A response acknowledging the event.
+   */
   public Response mention(EventsApiPayload<AppMentionEvent> payload, EventContext ctx) {
     var event = payload.getEvent();
     process(ctx, event, event.getChannel(), threadTs(event), removeMention(event.getText()));
     return ctx.ack();
   }
 
+  /**
+   * Handles a 'message' event within a thread from Slack. This is triggered when a new message is
+   * posted in a thread where the app is involved. It processes the message and sends a reply back
+   * to the same thread.
+   *
+   * @param payload The Slack event payload for a message event.
+   * @param ctx The event context provided by Slack Bolt.
+   * @return A response acknowledging the event.
+   */
   public Response threadMessage(EventsApiPayload<MessageEvent> payload, EventContext ctx) {
     var event = payload.getEvent();
     if (event.getThreadTs() != null) {
@@ -67,6 +88,15 @@ public class SlackEvent {
     return ctx.ack();
   }
 
+  /**
+   * Handles a 'message_changed' event within a thread from Slack. This is triggered when a message
+   * in a thread where the app is involved is edited. It processes the updated message and sends a
+   * reply back to the same thread.
+   *
+   * @param payload The Slack event payload for a message changed event.
+   * @param ctx The event context provided by Slack Bolt.
+   * @return A response acknowledging the event.
+   */
   public Response threadMessageChange(
       EventsApiPayload<MessageChangedEvent> payload, EventContext ctx) {
     var event = payload.getEvent();
@@ -77,6 +107,20 @@ public class SlackEvent {
     return ctx.ack();
   }
 
+  /**
+   * Core processing logic for handling an incoming message event. This method fetches the previous
+   * messages in the thread from Slack, then calls {@link ClaudeChat#generate(String, List)} to get
+   * an AI response. The response, which is a stream of text, is then formatted and sent as one or
+   * more reply messages back to the originating Slack thread using {@link
+   * SlackOperations#reply(EventContext, Event, String)}. Errors during the process are caught and
+   * reported to Slack.
+   *
+   * @param ctx The Slack event context.
+   * @param event The original Slack event (mention or message).
+   * @param channelId The ID of the channel where the event occurred.
+   * @param threadTs The timestamp of the thread to reply to.
+   * @param message The text of the message to process.
+   */
   void process(EventContext ctx, Event event, String channelId, String threadTs, String message) {
     slack
         .history(ctx, channelId, threadTs)
