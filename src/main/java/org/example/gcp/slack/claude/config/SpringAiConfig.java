@@ -79,7 +79,7 @@ public class SpringAiConfig {
                     .build())
         .map(
             client -> {
-              client.initialize().block(); // This blocking call remains as per original logic
+              client.initialize().block(); 
               return client;
             })
         .toList();
